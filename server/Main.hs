@@ -47,5 +47,5 @@ main = do
   let 
       broadcast = broadcastForServer state
       s1 = clientAcceptServer state "0.0.0.0" 8765
-      s2 = notyifyServer broadcast "0.0.0.0" 4444
+      s2 = notyifyServer broadcast "0.0.0.0" 11300
   splitIO s1 s2
