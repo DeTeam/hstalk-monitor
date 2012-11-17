@@ -1,0 +1,10 @@
+## Beanstalk monitoring stuff
+
+This repo consists two parts:
+* Simple Haskell server for pushing data about Beanstalk server state (for now, but later I'm gonna add some kind of subscription/interaction)
+* Middleman-driven EmberJS client for all that. It's also absolutely simple. No interface or anything else - I'm gonna add things in future
+
+
+Comments in Haskell code in russian for now, lately I'll replace it with english.
+
+Some time later you'll also see some installation readme on both server and client. Thinking about splitting in two repose, but not sure yet.
