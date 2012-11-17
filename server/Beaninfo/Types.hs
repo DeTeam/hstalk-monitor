@@ -3,7 +3,8 @@ module Beaninfo.Types (
   Client(..),
   ServerState(..),
   CurrentProtocol(..),
-  MServer(..)
+  MServer(..),
+  WSMonad(..)
 
   ) where
 
@@ -23,3 +24,5 @@ type ServerState = [Client]
 
 -- Передаем сервер между тредами
 type MServer = MVar ServerState
+
+type WSMonad = WS.WebSockets CurrentProtocol

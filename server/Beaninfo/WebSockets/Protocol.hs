@@ -56,17 +56,31 @@ createClient state sink = do
 -- Как-то лог
 -- Создем клиента
 -- Добавляем клиента
-application :: MServer -> WS.Request -> WS.WebSockets CurrentProtocol ()
+application :: MServer -> WS.Request -> WSMonad ()
 application state rq = do
   WS.acceptRequest rq
   WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
   sink <- WS.getSink
   client <- liftIO $ createClient state sink
-  forever hearbeat
+  wrapHeartBeat state client hearbeat
   return ()
 
-hearbeat :: WS.WebSockets CurrentProtocol ByteString
-hearbeat = WS.receiveData
+hearbeat :: WSMonad ()
+hearbeat = do
+  _ <- WS.receiveData :: WSMonad ByteString
+  return ()
+
+wrapHeartBeat :: MServer -> Client -> WSMonad () -> WSMonad ()
+wrapHeartBeat state client action = do
+    flip WS.catchWsError catchDisconnect $ do
+      action
+      wrapHeartBeat state client action
+  where catchDisconnect e = case fromException e of
+          Just WS.ConnectionClosed -> do
+            liftIO $ do
+              putStrLn "Client disconnected"
+              modifyMVar_ state $ return . (removeClient client)
+          _ -> return ()
 
 clientAcceptServer :: MServer -> String -> Int -> IO ()
 clientAcceptServer state host port =  WS.runServer host port $ application state
