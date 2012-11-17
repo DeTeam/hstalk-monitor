@@ -1,10 +1,19 @@
 ---
-title: Welcome to Middleman
+title: Home
 ---
 
-<div class="welcome">
-  <h1>Middleman is Watching</h1>
-  <p class="doc">
-    <%= link_to "Read Online Documentation", "http://middlemanapp.com/" %>
-  </p><!-- .doc -->
-</div><!-- .welcome -->
+
+<script type="text/x-handlebars" data-template-name="logger">
+  {{#each controller}}
+    <div class="log-item">
+      {{text}}
+    </div>
+  {{/each}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="application">
+
+  <h2>BeanStalk monitor</h2>
+  {{outlet}}
+
+</script>
