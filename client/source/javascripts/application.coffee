@@ -10,17 +10,21 @@ window.App = Ember.Application.create
     socket: null
     setupSocket: (logger) ->
       socket = new WebSocket( App.get("socketUrl") )
-      this.set "socket", socket
       socket.onopen = ->
-        console.log "socket opened"
+        socket.send "beanstalk"
       socket.onmessage = (message) ->
-        console.log "receive message", message
         logger.handleMessage message
+      socket.onerror = ->
+        console.log "socket shit happens", arguments
+      socket.onclose = ->
+        console.log "socket closed!", arguments
+
+      this.set "socket", socket
 
   LoggerController: Ember.ArrayController.extend
     content: []
     handleMessage: (m) ->
-      obj = Ember.Object.create raw: m.data
+      obj = Ember.Object.create JSON.parse(m.data)
       this.pushObject obj
 
   ApplicationView: Ember.View.extend

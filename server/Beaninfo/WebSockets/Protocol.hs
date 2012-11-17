@@ -7,7 +7,7 @@ module Beaninfo.WebSockets.Protocol (
 
 -- Полезности для работы с MVar итд
 import Control.Exception (fromException)
-import Control.Monad (forM_, mapM_)
+import Control.Monad (forM_, mapM_, forever)
 import Control.Concurrent (MVar, newMVar, modifyMVar_, readMVar)
 import Control.Monad.IO.Class (liftIO)
 
@@ -49,7 +49,7 @@ createClient :: MServer -> WS.Sink CurrentProtocol -> IO Client
 createClient state sink = do
   clientId <- generateClientId
   let client = (clientId, sink)
-  modifyMVar_ state $ \s -> do return (addClient client s)
+  modifyMVar_ state $ return . (addClient client)
   return client
 
 -- Получаем синк
@@ -62,7 +62,11 @@ application state rq = do
   WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
   sink <- WS.getSink
   client <- liftIO $ createClient state sink
+  forever hearbeat
   return ()
+
+hearbeat :: WS.WebSockets CurrentProtocol ByteString
+hearbeat = WS.receiveData
 
 clientAcceptServer :: MServer -> String -> Int -> IO ()
 clientAcceptServer state host port =  WS.runServer host port $ application state
