@@ -17,10 +17,10 @@ numClients :: ServerState -> Int
 numClients = length
 
 clientExists :: Client -> ServerState -> Bool
-clientExists client = any ((== fst client) . fst)
+clientExists client = any ((== getClientId client) . getClientId)
 
 addClient :: Client -> ServerState -> ServerState
 addClient client clients = client : clients
 
 removeClient :: Client -> ServerState -> ServerState
-removeClient client = filter ((/= fst client) . fst)
+removeClient client = filter ((/= getClientId client) . getClientId)

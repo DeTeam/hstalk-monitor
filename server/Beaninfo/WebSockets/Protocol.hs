@@ -5,70 +5,58 @@ module Beaninfo.WebSockets.Protocol (
     clientAcceptServer
   ) where
 
--- Полезности для работы с MVar итд
 import Control.Exception (fromException)
 import Control.Monad (forM_, mapM_, forever)
 import Control.Concurrent (MVar, newMVar, modifyMVar_, readMVar)
 import Control.Monad.IO.Class (liftIO)
 
--- Всякие внешние зависимости
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as T
 import Data.Text.Lazy.Encoding (decodeUtf8)
 
--- Конкатенация строчек нужна
 import Data.Monoid (mappend)
 
--- Веб-сокеты
 import qualified Network.WebSockets as WS
 
 import System.Random (randomIO)
 
--- На нужны типы
 import Beaninfo.Types
 import Beaninfo.WebSockets.Server
+import qualified Beaninfo.WebSockets.States as ST
 
--- Вещалка всем клиентами
 broadcast :: ServerState -> ByteString -> IO ()
 broadcast clients message = do
 
-  -- Отправляем мессадж всем клиентам
-  forM_ clients $ \(_, sink) -> 
-    WS.sendSink sink $ makeMessage message
+  forM_ clients $ \client ->
+    WS.sendSink (getClientSink client) $ makeMessage message
 
   where makeMessage = WS.textData . decodeUtf8
 
--- Генерим айдишничек для юзера
+
 generateClientId :: IO Int
 generateClientId = randomIO
 
--- Нужна ф-ия для создания клиента в IO монаде
--- Фишка - генерим случайный ID
--- Изменяем состояние
 createClient :: MServer -> WS.Sink CurrentProtocol -> IO Client
 createClient state sink = do
   clientId <- generateClientId
-  let client = (clientId, sink)
+  let client = Client clientId sink GeneralInfo
   modifyMVar_ state $ return . (addClient client)
   return client
 
--- Получаем синк
--- Как-то лог
--- Создем клиента
--- Добавляем клиента
 application :: MServer -> WS.Request -> WSMonad ()
 application state rq = do
   WS.acceptRequest rq
   WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
   sink <- WS.getSink
   client <- liftIO $ createClient state sink
-  wrapHeartBeat state client hearbeat
+  let stateManager = controlState state client
+  wrapHeartBeat state client stateManager
   return ()
 
-hearbeat :: WSMonad ()
-hearbeat = do
-  _ <- WS.receiveData :: WSMonad ByteString
-  return ()
+controlState :: MServer -> Client -> WSMonad ()
+controlState state client = do
+  command <- WS.receiveData :: WSMonad ByteString
+  ST.handleState state client command
 
 wrapHeartBeat :: MServer -> Client -> WSMonad () -> WSMonad ()
 wrapHeartBeat state client action = do
