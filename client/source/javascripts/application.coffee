@@ -9,8 +9,12 @@ window.App = Ember.Application.create
   ApplicationController: Ember.Controller.extend
     socket: null
     setupSocket: (logger) ->
+      d = $.Deferred()
       socket = new WebSocket( App.get("socketUrl") )
-      socket.onopen = -> console.log "socket connected"
+      socket.onopen = =>
+        @set "socket", socket
+        console.log "socket connected"
+        d.resolve()
       socket.onmessage = (message) ->
         logger.handleMessage message
       socket.onerror = ->
@@ -18,24 +22,21 @@ window.App = Ember.Application.create
       socket.onclose = ->
         console.log "socket closed!", arguments
 
-      @set "socket", socket
-
-      setTimeout( =>
-        this.moveTo "default"
-      , 10)
+      @set "dsocket", d.promise()
 
     moveTo: (state) ->
-      socket = @get "socket"
-      return unless socket
-      console.log "lets move to", state
-      msg = switch state 
-        when "default"
-          JSON.stringify( state: "general" )
-        when "tube"
-          JSON.stringify( state: "tube", tube: "default" )
-      console.log "sending", msg
-      blob = new Blob([msg], { "type" : "plain\/text" })
-      socket.send blob
+      @get("dsocket").done =>
+        socket = @get "socket"
+        return unless socket
+        console.log "lets move to", state
+        msg = switch state 
+          when "default"
+            JSON.stringify( state: "general" )
+          when "tube"
+            JSON.stringify( state: "tube", tube: "default" )
+        console.log "sending", msg
+        blob = new Blob([msg])
+        socket.send msg
 
   LoggerController: Ember.ArrayController.extend
     content: []
@@ -60,12 +61,17 @@ window.App = Ember.Application.create
           router.get("applicationController").connectOutlet("logger")
           router.get("applicationController").setupSocket router.get("loggerController")
 
-      # defaultTube: Ember.Route.extend 
-      #   route: "/tube"
-      #   connectOutlets: (router, context) ->
-      #     router.get("applicationController").moveTo "tube"
+        general: Ember.Route.extend
+          route: "/"
+          connectOutlets: (router, context) ->
+            router.get("applicationController").moveTo "default"
 
-    trackGeneral: Ember.Route.transitionTo('index')
+        defaultTube: Ember.Route.extend 
+          route: "/tube"
+          connectOutlets: (router, context) ->
+            router.get("applicationController").moveTo "tube"
+
+    trackGeneral: Ember.Route.transitionTo('index.general')
     trackDefaultTube: Ember.Route.transitionTo('index.defaultTube')
 
 $ ->

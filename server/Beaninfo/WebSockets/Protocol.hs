@@ -11,6 +11,7 @@ import Control.Concurrent (MVar, newMVar, modifyMVar_, readMVar)
 import Control.Monad.IO.Class (liftIO)
 
 import Data.ByteString.Lazy (ByteString)
+import Data.ByteString.Lazy.Char8 (unpack)
 import qualified Data.ByteString.Lazy as T
 import Data.Text.Lazy.Encoding (decodeUtf8)
 
@@ -57,7 +58,7 @@ application state rq = do
 controlState :: MServer -> Client -> WSMonad ()
 controlState state client = do
   command <- WS.receiveData :: WSMonad ByteString
-  liftIO $ putStrLn "command received"
+  liftIO $ putStrLn $ "command received" ++ (unpack command)
   ST.handleState state client command
 
 wrapHeartBeat :: MServer -> Client -> WSMonad () -> WSMonad ()
