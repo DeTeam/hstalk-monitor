@@ -64,6 +64,7 @@ handleState state client message =
           clientId = getClientId client
           sink = getClientSink client
           client' = Client clientId sink (TubeInfo tube)
+      liftIO $ putStrLn "switch to tube"
       liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
       return ()
 
@@ -72,6 +73,7 @@ handleState state client message =
           sink = getClientSink client
           client' = Client clientId sink (JobInfo i)
       liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
+      liftIO $ putStrLn "switch to job"
       return ()
 
     Just UnknownMessage -> do
@@ -79,9 +81,12 @@ handleState state client message =
           sink = getClientSink client
           client' = Client clientId sink GeneralInfo
       liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
+      liftIO $ putStrLn "switch to general info"
       return ()
 
-    _ -> return ()
+    _ ->  do
+      liftIO $ putStrLn "Something we can't handle"
+      return ()
 
 
 

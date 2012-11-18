@@ -19,6 +19,7 @@ data ClientSubscription =
   GeneralInfo |
   TubeInfo S.ByteString  |
   JobInfo Int
+  deriving (Show)
 
 data Client = Client {
     getClientId :: Int,

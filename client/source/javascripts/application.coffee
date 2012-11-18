@@ -20,14 +20,22 @@ window.App = Ember.Application.create
 
       @set "socket", socket
 
+      setTimeout( =>
+        this.moveTo "default"
+      , 10)
+
     moveTo: (state) ->
-      socket = @get "Socket"
+      socket = @get "socket"
       return unless socket
-      switch state 
+      console.log "lets move to", state
+      msg = switch state 
         when "default"
-          socket.send JSON.stringify( state: "general" )
+          JSON.stringify( state: "general" )
         when "tube"
-          socket.send JSON.stringify( state: "tube", tube: "default" )
+          JSON.stringify( state: "tube", tube: "default" )
+      console.log "sending", msg
+      blob = new Blob([msg], { "type" : "plain\/text" })
+      socket.send blob
 
   LoggerController: Ember.ArrayController.extend
     content: []
@@ -48,17 +56,17 @@ window.App = Ember.Application.create
       index: Ember.Route.extend
         route: "/"
         connectOutlets: (router, context) ->
+          console.log "index outlets"
           router.get("applicationController").connectOutlet("logger")
           router.get("applicationController").setupSocket router.get("loggerController")
-          router.get("applicationController").moveTo "default"
 
-      defaultTube: Ember.Route.extend
-        route: "default_tube"
-        connectOutlet: (router, context) ->
-          router.get("applicationController").moveTo "tube"
+      # defaultTube: Ember.Route.extend 
+      #   route: "/tube"
+      #   connectOutlets: (router, context) ->
+      #     router.get("applicationController").moveTo "tube"
 
-      trackGeneral: Ember.Route.transitionTo('index')
-      trackDefaultTube: Ember.Route.transitionTo('defaultTube')
+    trackGeneral: Ember.Route.transitionTo('index')
+    trackDefaultTube: Ember.Route.transitionTo('index.defaultTube')
 
 $ ->
   console.log "Init app"

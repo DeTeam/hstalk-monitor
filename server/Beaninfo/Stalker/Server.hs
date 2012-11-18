@@ -32,8 +32,10 @@ notyifyServer broadcast host port = do
 
 
 getUserMessage :: BeanstalkServer -> Client -> IO ByteString
-getUserMessage server c = liftA JSON.encode $
-  case getClientSubscription c of 
-    GeneralInfo -> BS.statsServer server
-    TubeInfo tube -> BS.statsTube server tube
-    JobInfo job -> BS.statsJob server job
+getUserMessage server c = do
+  putStrLn .show $ getClientSubscription c
+  liftA JSON.encode $
+    case getClientSubscription c of 
+      GeneralInfo -> BS.statsServer server
+      TubeInfo tube -> BS.statsTube server tube
+      JobInfo job -> BS.statsJob server job

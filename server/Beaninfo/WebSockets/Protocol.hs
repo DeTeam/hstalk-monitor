@@ -57,6 +57,7 @@ application state rq = do
 controlState :: MServer -> Client -> WSMonad ()
 controlState state client = do
   command <- WS.receiveData :: WSMonad ByteString
+  liftIO $ putStrLn "command received"
   ST.handleState state client command
 
 wrapHeartBeat :: MServer -> Client -> WSMonad () -> WSMonad ()
