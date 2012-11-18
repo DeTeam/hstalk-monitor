@@ -24,11 +24,12 @@ import Beaninfo.Types
 import Beaninfo.WebSockets.Server
 import qualified Beaninfo.WebSockets.States as ST
 
-broadcast :: ServerState -> ByteString -> IO ()
-broadcast clients message = do
+broadcast :: ServerState -> BFunction
+broadcast clients getMsg = do
 
-  forM_ clients $ \client ->
-    WS.sendSink (getClientSink client) $ makeMessage message
+  forM_ clients $ \client -> do
+    msg <- getMsg client
+    WS.sendSink (getClientSink client) $ makeMessage msg
 
   where makeMessage = WS.textData . decodeUtf8
 
@@ -73,6 +74,6 @@ wrapHeartBeat state client action = do
 clientAcceptServer :: MServer -> String -> Int -> IO ()
 clientAcceptServer state host port =  WS.runServer host port $ application state
 
-broadcastForServer :: MServer -> ByteString -> IO ()
-broadcastForServer state msg = (return state) >>= readMVar >>= (flip broadcast $ msg)
+broadcastForServer :: MServer -> BFunction
+broadcastForServer state getMsg = (return state) >>= readMVar >>= (flip broadcast $ getMsg)
 

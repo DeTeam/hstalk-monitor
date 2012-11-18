@@ -21,7 +21,7 @@ import Data.Maybe (maybe)
 import Data.HashMap.Strict (HashMap)
 import Data.Text  (Text)
 import Data.ByteString.Lazy (ByteString)
-import Data.ByteString.Lazy.Char8 (pack)
+import Data.ByteString.Char8 (pack)
 import qualified Data.HashMap.Strict as HM
 
 import Beaninfo.Types
@@ -57,6 +57,7 @@ maybeCompare hash key value = maybe False f m
 handleState :: MServer -> Client -> ByteString -> WSMonad ()
 handleState state client message =
   case (decode message) :: Maybe StateChangeMessage of 
+
     Just (TubeMessage name) -> do
       let tube = pack name
           clientId = getClientId client
@@ -71,6 +72,7 @@ handleState state client message =
           client' = Client clientId sink (JobInfo i)
       liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
       return ()
+
     _ -> return ()
 
 
