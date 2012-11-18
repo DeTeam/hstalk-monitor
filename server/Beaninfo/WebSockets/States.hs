@@ -28,8 +28,9 @@ import Beaninfo.Types
 import Beaninfo.WebSockets.Server
 
 data StateChangeMessage = 
-  TubeMessage String | 
-  JobMessage Int
+  TubeMessage String  | 
+  JobMessage Int      |
+  UnknownMessage
 
 instance FromJSON StateChangeMessage where
   parseJSON (Object v) 
@@ -39,7 +40,7 @@ instance FromJSON StateChangeMessage where
       | isJobMessage v = do
                             jobId <- v .: "job"
                             return $ JobMessage jobId
-      | otherwise = empty
+      | otherwise = return UnknownMessage
 
 
 isTubeMessage :: Object -> Bool
@@ -70,6 +71,13 @@ handleState state client message =
       let clientId = getClientId client
           sink = getClientSink client
           client' = Client clientId sink (JobInfo i)
+      liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
+      return ()
+
+    Just UnknownMessage -> do
+      let clientId = getClientId client
+          sink = getClientSink client
+          client' = Client clientId sink GeneralInfo
       liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
       return ()
 

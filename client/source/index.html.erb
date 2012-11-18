@@ -4,9 +4,14 @@ title: Home
 
 
 <script type="text/x-handlebars" data-template-name="logger">
+
+  <button {{action trackGeneral}}>General Info</button>
+  <button {{action trackDefaultTube}}>Default tube</button>
+
+
   {{#each controller}}
     <div class="log-item">
-      Connection: {{current-connections}}
+      Message + 1
     </div>
   {{/each}}
 </script>
