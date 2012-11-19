@@ -3,15 +3,10 @@ title: Home
 ---
 
 
-<script type="text/x-handlebars" data-template-name="logger">
-
-  <button {{action trackGeneral}}>General Info</button>
-  <button {{action trackDefaultTube}}>Default tube</button>
-
-
+<script type="text/x-handlebars" data-template-name="tube-list">
   {{#each controller}}
-    <div class="log-item">
-      Message
+    <div class="tube">
+      <a {{action openTube this}}>{{name}}</a>
     </div>
   {{/each}}
 </script>
@@ -19,6 +14,12 @@ title: Home
 <script type="text/x-handlebars" data-template-name="application">
 
   <h2>BeanStalk monitor</h2>
-  {{outlet}}
+  <div class="menu">
+    <button {{action trackGeneral}}>General Info</button>
+  </div>
+  <div class="tube-list">
+    {{outlet tubes}}
+    {{outlet innerData}}
+  </div>
 
 </script>

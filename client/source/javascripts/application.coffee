@@ -6,50 +6,62 @@ window.App = Ember.Application.create
   ready: ->
     console.log "Ember namespace is ok"
 
+ 
+  handlers:
+    default: (msg) ->
+      App.get("router.tubesController").handleMessage msg
+
+    tube: (msg) ->
+      
+
   ApplicationController: Ember.Controller.extend
     socket: null
-    setupSocket: (logger) ->
+    setupSocket: ->
       d = $.Deferred()
       socket = new WebSocket( App.get("socketUrl") )
+
       socket.onopen = =>
         @set "socket", socket
         console.log "socket connected"
-        d.resolve()
-      socket.onmessage = (message) ->
-        logger.handleMessage message
+        d.resolve socket
+
       socket.onerror = ->
         console.log "socket shit happens", arguments
+
       socket.onclose = ->
         console.log "socket closed!", arguments
 
       @set "dsocket", d.promise()
 
-    moveTo: (state) ->
+    moveTo: (state, options = {}) ->
       @get("dsocket").done =>
         socket = @get "socket"
         return unless socket
         console.log "lets move to", state
-        msg = switch state 
+        msg = switch state
           when "default"
-            JSON.stringify( state: "general" )
+            { state: "general" }
           when "tube"
-            JSON.stringify( state: "tube", tube: "default" )
+            socket.onmessage = App.get "handlers.tube"
+            { state: "tube", tube: "default" }
         console.log "sending", msg
-        blob = new Blob([msg])
-        socket.send msg
+        socket.send JSON.stringify( _.extend(options, msg) )
+        socket.onmessage = App.get("handlers.#{state}")
 
-  LoggerController: Ember.ArrayController.extend
+  TubesController: Ember.ArrayController.extend
     content: []
     handleMessage: (m) ->
-      obj = Ember.Object.create JSON.parse(m.data)
-      console.log obj
-      this.pushObject obj
+      data = JSON.parse(m.data)
+      objects = ( Em.Object.create(name: name) for name in data.tubes)
+      @set "content", objects
 
   ApplicationView: Ember.View.extend
     templateName: "application"
 
-  LoggerView: Ember.View.extend
-    templateName: "logger"
+
+  TubesView: Em.View.extend
+    templateName: "tube-list"
+
 
   Router: Ember.Router.extend
     enableLogging:  true,
@@ -58,21 +70,21 @@ window.App = Ember.Application.create
         route: "/"
         connectOutlets: (router, context) ->
           console.log "index outlets"
-          router.get("applicationController").connectOutlet("logger")
-          router.get("applicationController").setupSocket router.get("loggerController")
+          router.get("applicationController").connectOutlet(outletName: "tubes", name: "tubes")
+          router.get("applicationController").setupSocket router.get("tubesController")
 
         general: Ember.Route.extend
           route: "/"
           connectOutlets: (router, context) ->
             router.get("applicationController").moveTo "default"
 
-        defaultTube: Ember.Route.extend 
-          route: "/tube"
+        tube: Ember.Route.extend 
+          route: "/tube/:name"
           connectOutlets: (router, context) ->
-            router.get("applicationController").moveTo "tube"
+            router.get("applicationController").moveTo "tube", tube: context.name
 
     trackGeneral: Ember.Route.transitionTo('index.general')
-    trackDefaultTube: Ember.Route.transitionTo('index.defaultTube')
+    openTube: Ember.Route.transitionTo('tube')
 
 $ ->
   console.log "Init app"
