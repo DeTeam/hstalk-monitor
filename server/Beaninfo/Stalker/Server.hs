@@ -9,12 +9,15 @@ module Beaninfo.Stalker.Server (
 import Control.Concurrent (threadDelay)
 import Control.Applicative (liftA)
 import Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString as S
 import Data.ByteString.Lazy.Char8 (pack)
 import Network.Beanstalk (BeanstalkServer)
 import qualified Network.Beanstalk as BS
 import qualified Data.Aeson as JSON
+import Data.Map (Map, insert, fromList, toList)
 
 import Beaninfo.Types
+
 
 loopNotification :: BeanstalkServer -> BFunction -> IO ()
 loopNotification server broadcast = do
@@ -31,11 +34,18 @@ notyifyServer broadcast host port = do
   loopNotification server broadcast
 
 
+muteMap :: Map S.ByteString S.ByteString -> Map S.ByteString BasicServerInfo
+muteMap m = fromList . map f $ toList m
+  where f (k,v) = (k, CommonServerInfo v)
+
 getUserMessage :: BeanstalkServer -> Client -> IO ByteString
 getUserMessage server c = do
   putStrLn .show $ getClientSubscription c
   liftA JSON.encode $
     case getClientSubscription c of 
-      GeneralInfo -> BS.statsServer server
-      TubeInfo tube -> BS.statsTube server tube
-      JobInfo job -> BS.statsJob server job
+      GeneralInfo -> do
+        hash <- liftA muteMap $ BS.statsServer server
+        tubes <- BS.listTubes server
+        return $ insert "tubes" (ListServerInfo tubes) hash
+      TubeInfo tube -> liftA muteMap $ BS.statsTube server tube
+      JobInfo job -> liftA muteMap $ BS.statsJob server job

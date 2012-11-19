@@ -6,7 +6,8 @@ module Beaninfo.Types (
   MServer (..),
   WSMonad (..),
   ClientSubscription (..),
-  BFunction (..)
+  BFunction (..),
+  BasicServerInfo (..)
 
   ) where
 
@@ -14,6 +15,8 @@ import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString as S (ByteString)
 import qualified Network.WebSockets as WS
 import Control.Concurrent (MVar)
+import Data.Aeson
+import Data.ByteString.Char8 (unpack)
 
 data ClientSubscription =
   GeneralInfo |
@@ -27,6 +30,14 @@ data Client = Client {
     getClientSubscription :: ClientSubscription
   }
 
+
+data BasicServerInfo = 
+  CommonServerInfo S.ByteString |
+  ListServerInfo [S.ByteString]
+
+instance ToJSON BasicServerInfo where
+  toJSON (CommonServerInfo s) = toJSON s
+  toJSON (ListServerInfo tubes) = toJSON $ fmap unpack tubes
 
 type BFunction = (Client -> IO ByteString) -> IO ()
 type CurrentProtocol = WS.Hybi00
