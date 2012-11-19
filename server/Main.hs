@@ -33,6 +33,12 @@ import Beaninfo.WebSockets.Server
 -- Сервер для работы с бинстолком
 import Beaninfo.Stalker.Server
 
+-- Подключаем WAI, WARP
+import Network.Wai.Application.Static (staticApp, defaultWebAppSettings)
+import Network.Wai.Handler.WebSockets (intercept)
+import Network.Wai.Handler.Warp (runSettings, defaultSettings, 
+                                 settingsIntercept, settingsPort)
+
 -- Берем и делимся на два классных потока
 splitIO :: IO () -> IO () -> IO ()
 splitIO s1 s2 = do
@@ -41,11 +47,16 @@ splitIO s1 s2 = do
   waitBoth a1 a2
   return ()
 
+
 main :: IO ()
 main = do
   state <- newMVar newServerState
   let 
+      config = defaultSettings {
+        settingsPort=8765,
+        settingsIntercept=intercept $ (application state)
+      }
       broadcast = broadcastForServer state
-      s1 = clientAcceptServer state "0.0.0.0" 8765
+      s1 = runSettings config $ staticApp $ defaultWebAppSettings "www"
       s2 = notyifyServer broadcast "0.0.0.0" 11300
   splitIO s1 s2

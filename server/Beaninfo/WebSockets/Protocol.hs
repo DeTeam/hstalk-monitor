@@ -2,7 +2,8 @@
 
 module Beaninfo.WebSockets.Protocol (
     broadcastForServer,
-    clientAcceptServer
+    clientAcceptServer,
+    application
   ) where
 
 import Control.Exception (fromException)
