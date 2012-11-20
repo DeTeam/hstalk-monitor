@@ -54,39 +54,22 @@ maybeCompare hash key value = maybe False f m
   where f = (== String value)
         m = HM.lookup key hash
 
+modifySubscriptionFor :: MServer -> Client -> ClientSubscription -> WSMonad ()
+modifySubscriptionFor state client s = do
+      let clientId = getClientId client
+          sink = getClientSink client
+          client' = Client clientId sink s
+      liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
+      return ()
 
 handleState :: MServer -> Client -> ByteString -> WSMonad ()
 handleState state client message =
-  case (decode message) :: Maybe StateChangeMessage of 
-
-    Just (TubeMessage name) -> do
-      let tube = pack name
-          clientId = getClientId client
-          sink = getClientSink client
-          client' = Client clientId sink (TubeInfo tube)
-      liftIO $ putStrLn "switch to tube"
-      liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
-      return ()
-
-    Just (JobMessage i) -> do
-      let clientId = getClientId client
-          sink = getClientSink client
-          client' = Client clientId sink (JobInfo i)
-      liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
-      liftIO $ putStrLn "switch to job"
-      return ()
-
-    Just UnknownMessage -> do
-      let clientId = getClientId client
-          sink = getClientSink client
-          client' = Client clientId sink GeneralInfo
-      liftIO $ modifyMVar_ state $ return . (addClient client') . (removeClient client)
-      liftIO $ putStrLn "switch to general info"
-      return ()
-
-    _ ->  do
-      liftIO $ putStrLn "Something we can't handle"
-      return ()
+    case (decode message) :: Maybe StateChangeMessage of 
+      Just (TubeMessage name) -> modifySubscription $ TubeInfo (pack name)
+      Just (JobMessage i) -> modifySubscription $ JobInfo i
+      Just UnknownMessage -> modifySubscription GeneralInfo
+      _ ->  return ()
+  where modifySubscription = modifySubscriptionFor state client
 
 
 
