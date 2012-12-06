@@ -1,0 +1,14 @@
+!!!
+%html
+  %head
+    %meta{ :charset => "utf-8" }
+    
+    %meta{ :content => "IE=edge,chrome=1", :"http-equiv" => "X-UA-Compatible" }
+    
+    %title= data.page.title || "HASKELL ALL THE THINGS"
+
+    =stylesheet_link_tag "bootstrap", "application"
+    =javascript_include_tag  "all"
+
+  %body
+    =yield

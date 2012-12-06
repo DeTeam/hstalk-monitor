@@ -1,3 +1,8 @@
 source :rubygems
 
 gem "middleman", "~>3.0.6"
+gem 'haml'
+gem 'barber'
+gem 'therubyracer'
+gem 'less'
+gem 'handlebars_assets', :git => "https://github.com/DeTeam/handlebars_assets.git"

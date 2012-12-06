@@ -51,10 +51,17 @@ set :css_dir, 'stylesheets'
 
 set :js_dir, 'javascripts'
 
+require 'handlebars_assets'
+HandlebarsAssets::Config.template_namespace = 'HBS'
+
 set :images_dir, 'images'
+
 
 # Build-specific configuration
 configure :build do
+
+  # activate :sprockets
+
   # For example, change the Compass output style for deployment
   # activate :minify_css
 

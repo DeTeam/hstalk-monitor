@@ -1,0 +1,7 @@
+<div class="btn-group tube-list">
+  {{#each controller}}
+    <div class="tube">
+      <a class="btn" {{action openTube this}}>{{name}}</a>
+    </div>
+  {{/each}}
+</div>

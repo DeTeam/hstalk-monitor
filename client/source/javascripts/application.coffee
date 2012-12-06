@@ -56,11 +56,11 @@ window.App = Ember.Application.create
       @set "content", objects
 
   ApplicationView: Ember.View.extend
-    templateName: "application"
+    template: HBS['application']
 
 
   TubesView: Em.View.extend
-    templateName: "tube-list"
+    template: HBS['tube_list']
 
 
   Router: Ember.Router.extend
