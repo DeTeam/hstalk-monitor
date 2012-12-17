@@ -1,0 +1,9 @@
+Install it just like that:
+
+* Download sources via: `git clone https://github.com/DeTeam/hstalk-monitor.git` + cd
+* In server directory run: `cabal install`
+* Try start ws server: `bs-ws`
+* In client directory: `bundle install; middleman s`
+* Open: http://0.0.0.0:4567/
+
+If you have troubles installing this stuff - contact me.
