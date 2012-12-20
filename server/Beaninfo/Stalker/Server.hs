@@ -47,7 +47,7 @@ getUserMessage server cacher c = do
   case fromCache of
     Just v -> return v
     _ -> cache cacher sub $
-        liftA JSON.encode $ do
+        liftA (JSON.encode . insertCurrentState) $ do
           putStrLn "Actually go for data"
           case sub of 
             GeneralInfo -> do
@@ -57,3 +57,8 @@ getUserMessage server cacher c = do
             TubeInfo tube -> liftA muteMap $ BS.statsTube server tube
             JobInfo job -> liftA muteMap $ BS.statsJob server job
   where sub = getClientSubscription c
+        insertCurrentState = insert "state" $ CommonServerInfo $ case sub of
+          GeneralInfo -> "general"
+          TubeInfo _  -> "tube"
+          JobInfo _   -> "job"
+
