@@ -4,6 +4,7 @@
 //= require       ./libs/underscore
 //= require       ./libs/bootstrap
 //= require       ./application
+//= require_tree  ./models
 //= require_tree  ./templates
 //= require_tree  ./controllers
 //= require_tree  ./views
