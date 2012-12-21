@@ -3,5 +3,7 @@
 //= require       ./libs/ember
 //= require       ./libs/underscore
 //= require       ./libs/bootstrap
-//= require_tree  ./templates
 //= require       ./application
+//= require_tree  ./templates
+//= require_tree  ./controllers
+//= require_tree  ./views
