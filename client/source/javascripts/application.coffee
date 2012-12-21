@@ -21,18 +21,21 @@ window.App = Ember.Application.create
           App.get("router.tubesController").set "content", tubes
           Ember.Route.transitionTo('general')(router)
         receiveTube: (router, data) ->
-          console.log "Tube data", data
+          App.get("router.tubeController").set "content", data
+          Ember.Route.transitionTo('tube')(router)
 
         general: Ember.Route.extend
           route: "/"
           openTube: (router, event) ->
             App.serverSend { state: "tube", tube: event.context.name }
           connectOutlets: (router, context) ->
-            router.get("applicationController").connectOutlet(outletName: "tubes", name: "tubes")
+            router.get("applicationController").connectOutlet "tubes"
 
         tube: Ember.Route.extend
           route: "/tube/:name"
           connectOutlets: (router, context) ->
+            router.get("applicationController").connectOutlet "tube"
 
 $ ->
   App.initialize()
+
