@@ -5,7 +5,6 @@ window.App = Ember.Application.create
   ready: ->
     console.log "Ember namespace is ok"
     @set "_socket", App.Socket.create(url: @get("socketUrl"))
-    @serverSend { state: "general" }
 
   serverSend: (msg) ->
     @get("_socket").send msg
@@ -15,6 +14,10 @@ window.App = Ember.Application.create
     root: Ember.Route.extend
       index: Ember.Route.extend
         route: "/"
+        connectOutlets: (router, context) ->
+          router.send "trackGeneral"
+        trackGeneral: ->
+          App.serverSend { state: "general" }
         receiveGeneral: (router, data) ->
           console.log "general", arguments
           tubes = ( Em.Object.create(name: name) for name in data.tubes)
