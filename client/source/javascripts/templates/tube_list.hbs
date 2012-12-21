@@ -1,7 +1,9 @@
-<div class="btn-group tube-list">
+<table class="table table-hover tube-list">
   {{#each controller}}
-    <div class="tube">
-      <a class="btn" {{action openTube this}}>{{name}}</a>
-    </div>
+    <tr {{action openTube this}}>
+      <td>
+        <a href="javascript://">{{name}}</a>
+      </td>
+    </tr>
   {{/each}}
 </div>
