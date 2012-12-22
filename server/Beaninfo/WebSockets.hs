@@ -23,10 +23,11 @@ import qualified Network.WebSockets as WS
 import System.Random (randomIO)
 
 import Beaninfo.Types
+import Beaninfo.Strategies
 import Beaninfo.Server.States
 
 sendMessageToClient :: Client -> ByteString -> IO ()
-sendMessageToClient client message = WS.sendSink (getClientSink client) $ makeMessage msg
+sendMessageToClient client message = WS.sendSink (getClientSink client) $ makeMessage message
   where makeMessage = WS.textData . decodeUtf8
 
 broadcast :: ServerState -> BFunction
@@ -49,17 +50,17 @@ application strategy rq = do
   WS.acceptRequest rq
   WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
   sink <- WS.getSink
-  client <- liftIO $ createClient strategy sink
+  client <- liftIO $ createClient sink
   liftIO $ triggerEvent strategy (ClientConnected client)
   let stateManager = controlState strategy client
-  wrapHeartBeat state client stateManager
+  wrapHeartBeat strategy client stateManager
   return ()
 
 controlState :: IOStrategy -> Client -> WSMonad ()
 controlState strategy client = do
   command <- WS.receiveData :: WSMonad ByteString
   liftIO $ do
-    putStrLn =<< "command received" ++ (unpack command)
+    putStrLn $ "command received" ++ (unpack command)
     triggerEvent strategy (ClientCommandReceived client command)
 
 
@@ -75,6 +76,6 @@ wrapHeartBeat strategy client action = do
               triggerEvent strategy (ClientDisconnected client)
           _ -> return ()
 
-broadcastForServer :: MServer -> BFunction
-broadcastForServer state getMsg = (return state) >>= readMVar >>= (flip broadcast $ getMsg)
+--broadcastForServer :: MServer -> BFunction
+--broadcastForServer state getMsg = (return state) >>= readMVar >>= (flip broadcast $ getMsg)
 

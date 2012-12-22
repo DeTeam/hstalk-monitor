@@ -7,7 +7,11 @@ module Beaninfo.Types (
   WSMonad (..),
   ClientSubscription (..),
   BFunction (..),
-  BasicServerInfo (..)
+  BasicServerInfo (..),
+  Strategy (..),
+  IOStrategy (..),
+  ServerEvent (..),
+  DataSourceServer (..)
 
   ) where
 
@@ -17,10 +21,7 @@ import qualified Network.WebSockets as WS
 import Control.Concurrent (MVar)
 import Data.Aeson
 import Data.ByteString.Char8 (unpack)
-import qualified Network.Beanstalk (BeanstalkServer)
-
-import Data.Typeable
-import Control.Arrow
+import Network.Beanstalk (BeanstalkServer)
 
 data ClientSubscription =
   GeneralInfo |
@@ -44,7 +45,7 @@ data Strategy a = Strategy {
   runStrategy :: ServerEvent -> IO a
 }
 
-type IOStrategy = Strategy (IO ())
+type IOStrategy = Strategy ()
 
 type DataSourceServer = BeanstalkServer
 

@@ -20,7 +20,7 @@ import Data.Map (Map, insert, fromList, toList)
 import Data.Maybe
 
 import Beaninfo.Types
-import Beaninfo.Server.Strategies
+import Beaninfo.Strategies
 import Beaninfo.Server.Cacher
 
 notyifyServer ::  IOStrategy -> IO ()
@@ -28,7 +28,7 @@ notyifyServer strategy = do
     putStrLn "looping"
     triggerEvent strategy TimerPush
     threadDelay t
-    notyifyServer server broadcast
+    notyifyServer strategy
   where t = 5000000
 
 

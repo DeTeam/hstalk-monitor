@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Beaninfo.Messages (
   StateChangeMessage (..)
 ) where 
