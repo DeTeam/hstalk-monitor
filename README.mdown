@@ -8,3 +8,7 @@ This repo consists two parts:
 Comments in Haskell code in russian for now, lately I'll replace it with english.
 
 Some time later you'll also see some installation readme on both server and client. Thinking about splitting in two repose, but not sure yet.
+
+## Developers
+* server - Timur < DeTeam > Amirov
+* client - Nick < oruen > Recobra
