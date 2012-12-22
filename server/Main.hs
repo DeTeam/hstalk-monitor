@@ -3,60 +3,59 @@
 --
 -- Author: DeTeam
 -- Date: 2012-11-17
--- Description: Классная библиотечка (в перспективе - бинарник),
---  которая умеет спавнить WebSockets сервер на указанном хосте/порту
---    и принимает клиентов.
---  Клиенты регуларно получают инфу о состоянии Beanstalkd сервачка
---  (пока что - миниму, потом, может, расширим)
---
---  Для обмена сообщениями используется JSON формализованный с пом-ю Aeson (сообщения опр. формата, иначе - ошибочки)
+-- Description: Little tool for monitoring beanstalkd queue
+--  Aeson-based JSON communication via WebSockets, Warp
 
 module Main ( main ) where
 
--- Для классного распараллеливания
+import Control.Monad (mapM)
 import Control.Concurrent (newMVar)
-import Control.Concurrent.Async (async, waitBoth)
+import Control.Concurrent.Async (async, waitAny)
+import Control.Arrow ((>>>))
 
--- Веб-сокеты
 import qualified Network.WebSockets as WS
 
--- Всякие нужны типы данных
+-- Common data types
 import Beaninfo.Types
 
--- Полезности, которые будут использоваться в main и пр
 import Beaninfo.WebSockets.Protocol
-
--- Тут инфа о том, как работать с клиентами,
--- и прочее для работы с ServerState
 import Beaninfo.WebSockets.Server
+import Beaninfo.Server.Strategies
 
--- Сервер для работы с бинстолком
-import Beaninfo.Stalker.Server
 
--- Подключаем WAI, WARP
+import qualified Network.Beanstalk as BS
+
+-- WAI + Warp
 import Network.Wai.Application.Static (staticApp, defaultWebAppSettings)
 import Network.Wai.Handler.WebSockets (intercept)
 import Network.Wai.Handler.Warp (runSettings, defaultSettings, 
                                  settingsIntercept, settingsPort)
 
--- Берем и делимся на два классных потока
-splitIO :: IO () -> IO () -> IO ()
-splitIO s1 s2 = do
-  a1 <- async s1
-  a2 <- async s2
-  waitBoth a1 a2
+
+splitIO :: [IO ()] -> IO ()
+splitIO actions = do
+  asyncs <- mapM async actions
+  waitAny asyncs
   return ()
 
 
 main :: IO ()
 main = do
   state <- newMVar newServerState
+  bsServer <- BS.connectBeanstalk "0.0.0.0" "11300"
   let 
+      build s = s state bsServer
+
+      serverStrategy = foldl1 (>>>) [
+        build serverLoopStrategy,
+        build commandReceivedStrategy,
+        build clientDisconnectedStrategy)
+      ]
+
       config = defaultSettings {
         settingsPort=8765,
-        settingsIntercept=intercept $ (application state)
+        settingsIntercept=intercept $ (application serverStrategy)
       }
-      broadcast = broadcastForServer state
-      s1 = runSettings config $ staticApp $ defaultWebAppSettings "www"
-      s2 = notyifyServer broadcast "0.0.0.0" 11300
-  splitIO s1 s2
+      webSocketsServer  = runSettings config $ staticApp $ defaultWebAppSettings "www"
+      beanstalkServer   = notyifyServer serverStrategy bsServer
+  splitIO [webSocketsServer, beanstalkServer]

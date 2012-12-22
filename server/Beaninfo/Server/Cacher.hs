@@ -1,4 +1,4 @@
-module Beaninfo.Stalker.Cacher (
+module Beaninfo.Server.Cacher (
     retrieve,
     cache,
     newCacher,
@@ -14,11 +14,6 @@ import Control.Applicative ( (<$>) )
 import Control.Concurrent.MVar ( MVar, newMVar, modifyMVar_, readMVar )
 
 import Beaninfo.Types
-
---
--- Возможно, тут понядобится трансформер на Reader/State
---
-
 
 type Cacher = MVar (M.Map String ByteString)
 

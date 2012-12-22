@@ -17,6 +17,10 @@ import qualified Network.WebSockets as WS
 import Control.Concurrent (MVar)
 import Data.Aeson
 import Data.ByteString.Char8 (unpack)
+import qualified Network.Beanstalk (BeanstalkServer)
+
+import Data.Typeable
+import Control.Arrow
 
 data ClientSubscription =
   GeneralInfo |
@@ -30,6 +34,19 @@ data Client = Client {
     getClientSubscription :: ClientSubscription
   }
 
+data ServerEvent =  ClientConnected Client |
+                    ClientDisconnected Client |
+                    ClientCommandReceived Client ByteString | 
+                    TimerPush
+
+data Strategy a = Strategy {
+  shouldActivate :: ServerEvent -> Bool,
+  runStrategy :: ServerEvent -> IO a
+}
+
+type IOStrategy = Strategy (IO ())
+
+type DataSourceServer = BeanstalkServer
 
 data BasicServerInfo = 
   CommonServerInfo S.ByteString |
