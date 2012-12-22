@@ -14,8 +14,6 @@ window.App = Ember.Application.create
     root: Ember.Route.extend
       index: Ember.Route.extend
         route: "/"
-        connectOutlets: (router, context) ->
-          router.send "trackGeneral"
         trackGeneral: ->
           App.serverSend { state: "general" }
         receiveGeneral: (router, data) ->
@@ -25,7 +23,7 @@ window.App = Ember.Application.create
           Ember.Route.transitionTo('general')(router)
         receiveTube: (router, data) ->
           App.get("router.tubeController").set "content", data
-          Ember.Route.transitionTo('tube')(router)
+          Ember.Route.transitionTo('tube')(router, {name: data.name})
 
         general: Ember.Route.extend
           route: "/"
@@ -36,6 +34,9 @@ window.App = Ember.Application.create
 
         tube: Ember.Route.extend
           route: "/tube/:name"
+          deserialize: (router, urlParams) ->
+            App.serverSend {state: "tube", tube: urlParams.name}
+            {name: urlParams.name}
           connectOutlets: (router, context) ->
             router.get("applicationController").connectOutlet "tube"
 
