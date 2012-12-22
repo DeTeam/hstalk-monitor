@@ -18,8 +18,7 @@ window.App = Ember.Application.create
           App.serverSend { state: "general" }
         receiveGeneral: (router, data) ->
           console.log "general", arguments
-          tubes = ( Em.Object.create(name: name) for name in data.tubes)
-          App.get("router.tubesController").set "content", tubes
+          App.get("router.tubesController").set "content", data
           Ember.Route.transitionTo('general')(router)
         receiveTube: (router, data) ->
           App.get("router.tubeController").set "content", data
