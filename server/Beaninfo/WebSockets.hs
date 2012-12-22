@@ -2,6 +2,7 @@
 
 module Beaninfo.WebSockets (
     broadcast,
+    sendMessageToClient,
     application
   ) where
 
@@ -24,12 +25,14 @@ import System.Random (randomIO)
 import Beaninfo.Types
 import Beaninfo.Server.States
 
+sendMessageToClient :: Client -> ByteString -> IO ()
+sendMessageToClient client message = WS.sendSink (getClientSink client) $ makeMessage msg
+  where makeMessage = WS.textData . decodeUtf8
+
 broadcast :: ServerState -> BFunction
 broadcast clients getMsg = do
   forM_ clients $ \client -> do
-    msg <- getMsg client
-    WS.sendSink (getClientSink client) $ makeMessage msg
-  where makeMessage = WS.textData . decodeUtf8
+    getMsg client >>= sendMessageToClient client
 
 
 generateClientId :: IO Int

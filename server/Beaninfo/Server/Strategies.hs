@@ -10,6 +10,7 @@ module Beaninfo.Server.Strategies (
 import Beaninfo.Types
 import Beaninfo.Server.Cacher
 import Beaninfo.Server.Clients
+import Beaninfo.Server.States
 import Beaninfo.Stalker
 import Beaninfo.WebSockets
 
@@ -31,6 +32,18 @@ clientDisconnectedStrategy soruce server = Strategy p $ \(ClientDisconnected cli
   where
         p :: ServerEvent -> Bool
         p ClientDisconnected _ = True
+        p _ = False
+
+commandReceivedStrategy source server = Strategy p $ \(ClientCommandReceived client command) -> do
+    case decode command :: StateChangeMessage of
+      Just scm -> do
+        handleState server client scm
+        cacher <- newCacher
+        getUserMessage source cacher >>= sendMessageToClient client
+      Nothing -> return ()
+  where
+        p :: ServerEvent -> Bool
+        p ClientCommandReceived _ _ = True
         p _ = False
 
 -- With given computation and event - do some IO
