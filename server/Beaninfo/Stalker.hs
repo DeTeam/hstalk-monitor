@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Beaninfo.Stalker.Server (
+module Beaninfo.Stalker (
 
-  notyifyServer
+  notyifyServer,
+  getUserMessage,
+  mutateMap
 
   ) where
 
@@ -18,26 +20,20 @@ import Data.Map (Map, insert, fromList, toList)
 import Data.Maybe
 
 import Beaninfo.Types
-import Beaninfo.Stalker.Cacher
+import Beaninfo.Strategies
+import Beaninfo.Server.Cacher
 
-loopNotification :: BeanstalkServer -> BFunction -> IO ()
-loopNotification server broadcast = do
+notyifyServer ::  IOStrategy -> IO ()
+notyifyServer strategy = do
     putStrLn "looping"
-    tubes <- BS.listTubes server
-    cacher <- newCacher
-    broadcast $ getUserMessage server cacher
+    triggerEvent strategy TimerPush
     threadDelay t
-    loopNotification server broadcast
+    notyifyServer strategy
   where t = 5000000
 
-notyifyServer :: BFunction -> String -> Int -> IO ()
-notyifyServer broadcast host port = do
-  server <- BS.connectBeanstalk host (show port)
-  loopNotification server broadcast
 
-
-muteMap :: Map S.ByteString S.ByteString -> Map S.ByteString BasicServerInfo
-muteMap m = fromList . map f $ toList m
+mutateMap :: Map S.ByteString S.ByteString -> Map S.ByteString BasicServerInfo
+mutateMap m = fromList . map f $ toList m
   where f (k,v) = (k, CommonServerInfo v)
 
 getUserMessage :: BeanstalkServer -> Cacher -> Client -> IO ByteString
@@ -51,11 +47,11 @@ getUserMessage server cacher c = do
           putStrLn "Actually go for data"
           case sub of 
             GeneralInfo -> do
-              hash <- liftA muteMap $ BS.statsServer server
+              hash <- liftA mutateMap $ BS.statsServer server
               tubes <- BS.listTubes server
               return $ insert "tubes" (ListServerInfo tubes) hash
-            TubeInfo tube -> liftA muteMap $ BS.statsTube server tube
-            JobInfo job -> liftA muteMap $ BS.statsJob server job
+            TubeInfo tube -> liftA mutateMap $ BS.statsTube server tube
+            JobInfo job -> liftA mutateMap $ BS.statsJob server job
   where sub = getClientSubscription c
         insertCurrentState = insert "state" $ CommonServerInfo $ case sub of
           GeneralInfo -> "general"

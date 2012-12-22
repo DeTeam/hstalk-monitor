@@ -1,12 +1,10 @@
-module Beaninfo.WebSockets.Server (
-
+module Beaninfo.Server.Clients (
     newServerState,
     numClients,
     clientExists,
     addClient,
     removeClient
-
-  ) where
+) where
 
 import Beaninfo.Types
 
